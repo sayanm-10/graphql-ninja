@@ -5,34 +5,63 @@ const {
 	GraphQLObjectType, 
 	GraphQLString, 
 	GraphQLSchema,
-	GraphQLID 
+	GraphQLID,
+	GraphQLInt
 } = graphql;
 
 // dummy data
 const books = [
-	{title: 'JS for dummies', genre: 'tech', id: '1'},
-	{title: 'JS for novices', genre: 'tech', id: '2'},
-	{title: 'JS for ninjas', genre: 'tech', id: '3'},
+	{title: 'JS for dummies', genre: 'tech', id: '1', authorId: '3'},
+	{title: 'JS for novices', genre: 'tech', id: '2', authorId: '1'},
+	{title: 'JS for ninjas', genre: 'tech', id: '3', authorId: '2'},
+];
+
+const authors = [
+	{id: '1', name: 'Jim', age: 43},
+	{id: '2', name: 'Tim', age: 29},
+	{id: '3', name: 'Bill', age: 58}
 ];
 
 const BookType = new GraphQLObjectType({
-	name: 'Books',
+	name: 'Book',
 	fields: () => ({
 		id: { type: GraphQLID },
 		title: { type: GraphQLString },
-		genre: { type: GraphQLString }
+		genre: { type: GraphQLString },
+		author: {
+			type: AuthorType,
+			resolve(parent, args) {
+				return _.find(authors, {id: parent.authorId});
+			}
+		}
+	})
+});
+
+const AuthorType = new GraphQLObjectType({
+	name: 'Author',
+	fields: () => ({
+		id: { type: GraphQLID },
+		name: { type: GraphQLString },
+		age: { type: GraphQLInt }
 	})
 });
 
 const RootQuery = new GraphQLObjectType({
 	name: 'RootQueryType',
 	fields: {
-		book: {
+		book: { // this will become one of the queries
 			type: BookType,
 			args: { id: { type: GraphQLID }},
 			resolve(parent, args){
 				// code that gets the actual data from the DB/source
 				return _.find(books, {id: args.id});
+			}
+		},
+		author: { // another query
+			type: AuthorType,
+			args: { id : { type: GraphQLID}},
+			resolve(parent, args) {
+				return _.find(authors, {id: args.id});
 			}
 		}
 	}
